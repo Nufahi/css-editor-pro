@@ -225,26 +225,36 @@ function updateLinesAndStatus() {
 /* ---- Drag ---- */
 function initDrag() {
     const $editor = $('#cep-editor');
+    const header = document.getElementById('cep-header');
     let dragging = false, startX, startY, initL, initT;
 
+    function getXY(e) {
+        if (e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        return { x: e.clientX, y: e.clientY };
+    }
+
     function onStart(e) {
-        if ($(e.target).closest('button').length) return;
-        const ev = e.type === 'touchstart' ? e.originalEvent.touches[0] : e;
+        if (e.target.closest && e.target.closest('button')) return;
+        const p = getXY(e);
         dragging = true;
-        startX = ev.clientX;
-        startY = ev.clientY;
+        startX = p.x;
+        startY = p.y;
         initL = $editor.offset().left;
         initT = $editor.offset().top;
         $editor.addClass('cep-dragging');
-        e.preventDefault();
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onEnd);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onEnd);
     }
 
     function onMove(e) {
         if (!dragging) return;
-        const ev = e.type === 'touchmove' ? e.originalEvent.touches[0] : e;
+        e.preventDefault();
+        const p = getXY(e);
         $editor.css({
-            left: (initL + ev.clientX - startX) + 'px',
-            top: (initT + ev.clientY - startY) + 'px',
+            left: (initL + p.x - startX) + 'px',
+            top: (initT + p.y - startY) + 'px',
         });
     }
 
@@ -252,17 +262,17 @@ function initDrag() {
         if (!dragging) return;
         dragging = false;
         $editor.removeClass('cep-dragging');
-        $(document).off('.cep-drag');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onEnd);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onEnd);
         const settings = getSettings();
         settings.position = { top: parseInt($editor.css('top')), left: parseInt($editor.css('left')) };
         saveSettingsDebounced();
     }
 
-    $('#cep-header').on('mousedown touchstart', function (e) {
-        onStart(e);
-        $(document).on('mousemove.cep-drag touchmove.cep-drag', onMove);
-        $(document).on('mouseup.cep-drag touchend.cep-drag', onEnd);
-    });
+    header.addEventListener('mousedown', onStart);
+    header.addEventListener('touchstart', onStart, { passive: false });
 }
 
 
@@ -270,28 +280,39 @@ function initDrag() {
 /* ---- Resize ---- */
 function initResize() {
     const $editor = $('#cep-editor');
+    const handle = document.getElementById('cep-resize-handle');
     let resizing = false, startX, startY, startW, startH, raf;
 
+    function getXY(e) {
+        if (e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        return { x: e.clientX, y: e.clientY };
+    }
+
     function onStart(e) {
-        const ev = e.type === 'touchstart' ? e.originalEvent.touches[0] : e;
+        const p = getXY(e);
         resizing = true;
-        startX = ev.clientX;
-        startY = ev.clientY;
+        startX = p.x;
+        startY = p.y;
         startW = $editor.width();
         startH = $editor.height();
         $editor.addClass('cep-resizing');
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onEnd);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onEnd);
         e.preventDefault();
         e.stopPropagation();
     }
 
     function onMove(e) {
         if (!resizing) return;
+        e.preventDefault();
         if (raf) cancelAnimationFrame(raf);
         raf = requestAnimationFrame(function () {
-            const ev = e.type === 'touchmove' ? e.originalEvent.touches[0] : e;
+            const p = getXY(e);
             $editor.css({
-                width: Math.max(300, startW + ev.clientX - startX) + 'px',
-                height: Math.max(250, startH + ev.clientY - startY) + 'px',
+                width: Math.max(300, startW + p.x - startX) + 'px',
+                height: Math.max(250, startH + p.y - startY) + 'px',
             });
         });
     }
@@ -300,18 +321,18 @@ function initResize() {
         if (!resizing) return;
         resizing = false;
         $editor.removeClass('cep-resizing');
-        $(document).off('.cep-resize');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onEnd);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onEnd);
         if (raf) cancelAnimationFrame(raf);
         const settings = getSettings();
         settings.size = { width: $editor.width(), height: $editor.height() };
         saveSettingsDebounced();
     }
 
-    $('#cep-resize-handle').on('mousedown touchstart', function (e) {
-        onStart(e);
-        $(document).on('mousemove.cep-resize touchmove.cep-resize', onMove);
-        $(document).on('mouseup.cep-resize touchend.cep-resize', onEnd);
-    });
+    handle.addEventListener('mousedown', onStart);
+    handle.addEventListener('touchstart', onStart, { passive: false });
 }
 
 
