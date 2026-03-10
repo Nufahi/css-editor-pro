@@ -5,7 +5,7 @@ const { extensionSettings, saveSettingsDebounced, eventSource, event_types } = c
 
 /* ---- Settings ---- */
 const defaultSettings = Object.freeze({
-    enabled: true,
+    enabled: false,
     position: { top: 100, left: null },
     size: { width: 420, height: 500 },
     isCollapsed: false,
@@ -225,111 +225,77 @@ function updateLinesAndStatus() {
 /* ---- Drag ---- */
 function initDrag() {
     const $editor = $('#cep-editor');
-    const header = document.getElementById('cep-header');
-    if (!header) return;
     let dragging = false, startX, startY, initL, initT;
 
-    function getXY(e) {
-        if (e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        return { x: e.clientX, y: e.clientY };
-    }
-
-    function onStart(e) {
-        if (e.target.closest && e.target.closest('button')) return;
-        const p = getXY(e);
+    $('#cep-header').on('mousedown', function (e) {
+        if ($(e.target).closest('button').length) return;
         dragging = true;
-        startX = p.x; startY = p.y;
+        startX = e.clientX;
+        startY = e.clientY;
         initL = $editor.offset().left;
         initT = $editor.offset().top;
         $editor.addClass('cep-dragging');
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onEnd);
-        document.addEventListener('touchmove', onMove, { passive: false });
-        document.addEventListener('touchend', onEnd);
-    }
 
-    function onMove(e) {
-        if (!dragging) return;
+        $(document).on('mousemove.cep-drag', function (e) {
+            if (!dragging) return;
+            $editor.css({
+                left: (initL + e.clientX - startX) + 'px',
+                top:  (initT + e.clientY - startY) + 'px',
+            });
+        });
+        $(document).on('mouseup.cep-drag', function () {
+            if (!dragging) return;
+            dragging = false;
+            $editor.removeClass('cep-dragging');
+            $(document).off('.cep-drag');
+            const settings = getSettings();
+            settings.position = {
+                top:  parseInt($editor.css('top')),
+                left: parseInt($editor.css('left')),
+            };
+            saveSettingsDebounced();
+        });
         e.preventDefault();
-        const p = getXY(e);
-        $editor.css({ left: (initL + p.x - startX) + 'px', top: (initT + p.y - startY) + 'px' });
-    }
-
-    function onEnd() {
-        if (!dragging) return;
-        dragging = false;
-        $editor.removeClass('cep-dragging');
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onEnd);
-        document.removeEventListener('touchmove', onMove);
-        document.removeEventListener('touchend', onEnd);
-        const settings = getSettings();
-        settings.position = { top: parseInt($editor.css('top')), left: parseInt($editor.css('left')) };
-        saveSettingsDebounced();
-    }
-
-    header.addEventListener('mousedown', onStart);
-    header.addEventListener('touchstart', onStart, { passive: false });
+    });
 }
-
 
 /* ---- Resize ---- */
 function initResize() {
     const $editor = $('#cep-editor');
-    const handle = document.getElementById('cep-resize-handle');
-    if (!handle) return;
     let resizing = false, startX, startY, startW, startH, raf;
 
-    function getXY(e) {
-        if (e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        return { x: e.clientX, y: e.clientY };
-    }
-
-    function onStart(e) {
-        const p = getXY(e);
+    $('#cep-resize-handle').on('mousedown', function (e) {
         resizing = true;
-        startX = p.x; startY = p.y;
-        startW = $editor.width(); startH = $editor.height();
+        startX = e.clientX;
+        startY = e.clientY;
+        startW = $editor.width();
+        startH = $editor.height();
         $editor.addClass('cep-resizing');
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onEnd);
-        document.addEventListener('touchmove', onMove, { passive: false });
-        document.addEventListener('touchend', onEnd);
-        e.preventDefault();
-        e.stopPropagation();
-    }
 
-    function onMove(e) {
-        if (!resizing) return;
-        e.preventDefault();
-        if (raf) cancelAnimationFrame(raf);
-        raf = requestAnimationFrame(function () {
-            const p = getXY(e);
-            $editor.css({
-                width: Math.max(300, startW + p.x - startX) + 'px',
-                height: Math.max(250, startH + p.y - startY) + 'px',
+        $(document).on('mousemove.cep-resize', function (e) {
+            if (!resizing) return;
+            if (raf) cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(() => {
+                $editor.css({
+                    width:  Math.max(300, startW + e.clientX - startX) + 'px',
+                    height: Math.max(250, startH + e.clientY - startY) + 'px',
+                });
             });
         });
-    }
-
-    function onEnd() {
-        if (!resizing) return;
-        resizing = false;
-        $editor.removeClass('cep-resizing');
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onEnd);
-        document.removeEventListener('touchmove', onMove);
-        document.removeEventListener('touchend', onEnd);
-        if (raf) cancelAnimationFrame(raf);
-        const settings = getSettings();
-        settings.size = { width: $editor.width(), height: $editor.height() };
-        saveSettingsDebounced();
-    }
-
-    handle.addEventListener('mousedown', onStart);
-    handle.addEventListener('touchstart', onStart, { passive: false });
+        $(document).on('mouseup.cep-resize', function () {
+            if (!resizing) return;
+            resizing = false;
+            $editor.removeClass('cep-resizing');
+            $(document).off('.cep-resize');
+            if (raf) cancelAnimationFrame(raf);
+            const settings = getSettings();
+            settings.size = { width: $editor.width(), height: $editor.height() };
+            saveSettingsDebounced();
+        });
+        e.preventDefault();
+        e.stopPropagation();
+    });
 }
-
 
 /* ---- Buttons ---- */
 function initButtons() {
