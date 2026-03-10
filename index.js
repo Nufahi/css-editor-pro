@@ -22,19 +22,28 @@ function getSettings() {
 /* ---- Settings UI ---- */
 function createSettingsUI() {
     const html = `
-        <div class="css-editor-pro-settings" style="padding:8px 0;">
-            <div class="flex-container" style="align-items:center;gap:10px;margin-bottom:8px;">
-                <input id="cep-toggle" type="checkbox" />
-                <label for="cep-toggle">Показывать CSS редактор</label>
+        <div class="css-editor-pro-settings">
+            <div class="inline-drawer">
+                <div class="inline-drawer-toggle inline-drawer-header">
+                    <b>CSS Editor Pro</b>
+                    <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+                </div>
+                <div class="inline-drawer-content">
+                    <div class="flex-container" style="align-items:center;gap:10px;margin-bottom:8px;">
+                        <input id="cep-toggle" type="checkbox" />
+                        <label for="cep-toggle">Показывать CSS редактор</label>
+                    </div>
+                    <button id="cep-reset-pos" class="menu_button" style="width:100%;font-size:12px;padding:7px 14px;">
+                        <i class="fa-solid fa-compress-arrows-alt" style="margin-right:6px"></i>Сбросить положение
+                    </button>
+                </div>
             </div>
-            <button id="cep-reset-pos" class="menu_button" style="width:100%;font-size:12px;padding:7px 14px;">
-                <i class="fa-solid fa-compress-arrows-alt" style="margin-right:6px"></i>Сбросить положение
-            </button>
         </div>`;
     $('#extensions_settings2').append(html);
 
     const settings = getSettings();
     $('#cep-toggle').prop('checked', settings.enabled);
+
     $('#cep-toggle').on('change', function () {
         settings.enabled = $(this).prop('checked');
         saveSettingsDebounced();
@@ -44,7 +53,7 @@ function createSettingsUI() {
     $('#cep-reset-pos').on('click', function () {
         const $editor = $('#cep-editor');
         const top = 100;
-        const left = window.innerWidth - ($editor.outerWidth() || 420) - 20;
+        const left = window.innerWidth - 440;
         $editor.css({ top: top + 'px', left: left + 'px' });
         settings.position = { top, left };
         saveSettingsDebounced();
@@ -54,7 +63,6 @@ function createSettingsUI() {
         }
     });
 }
-
 
 /* ---- Floating Editor ---- */
 function createFloatingEditor() {
@@ -219,75 +227,94 @@ function initDrag() {
     const $editor = $('#cep-editor');
     let dragging = false, startX, startY, initL, initT;
 
-    $('#cep-header').on('mousedown', function (e) {
+    function onStart(e) {
         if ($(e.target).closest('button').length) return;
+        const ev = e.type === 'touchstart' ? e.originalEvent.touches[0] : e;
         dragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
+        startX = ev.clientX;
+        startY = ev.clientY;
         initL = $editor.offset().left;
         initT = $editor.offset().top;
         $editor.addClass('cep-dragging');
-
-        $(document).on('mousemove.cep-drag', function (e) {
-            if (!dragging) return;
-            $editor.css({
-                left: (initL + e.clientX - startX) + 'px',
-                top:  (initT + e.clientY - startY) + 'px',
-            });
-        });
-        $(document).on('mouseup.cep-drag', function () {
-            if (!dragging) return;
-            dragging = false;
-            $editor.removeClass('cep-dragging');
-            $(document).off('.cep-drag');
-            const settings = getSettings();
-            settings.position = {
-                top:  parseInt($editor.css('top')),
-                left: parseInt($editor.css('left')),
-            };
-            saveSettingsDebounced();
-        });
         e.preventDefault();
+    }
+
+    function onMove(e) {
+        if (!dragging) return;
+        const ev = e.type === 'touchmove' ? e.originalEvent.touches[0] : e;
+        $editor.css({
+            left: (initL + ev.clientX - startX) + 'px',
+            top: (initT + ev.clientY - startY) + 'px',
+        });
+    }
+
+    function onEnd() {
+        if (!dragging) return;
+        dragging = false;
+        $editor.removeClass('cep-dragging');
+        $(document).off('.cep-drag');
+        const settings = getSettings();
+        settings.position = { top: parseInt($editor.css('top')), left: parseInt($editor.css('left')) };
+        saveSettingsDebounced();
+    }
+
+    $('#cep-header').on('mousedown touchstart', function (e) {
+        onStart(e);
+        $(document).on('mousemove.cep-drag touchmove.cep-drag', onMove);
+        $(document).on('mouseup.cep-drag touchend.cep-drag', onEnd);
     });
 }
+
+
 
 /* ---- Resize ---- */
 function initResize() {
     const $editor = $('#cep-editor');
     let resizing = false, startX, startY, startW, startH, raf;
 
-    $('#cep-resize-handle').on('mousedown', function (e) {
+    function onStart(e) {
+        const ev = e.type === 'touchstart' ? e.originalEvent.touches[0] : e;
         resizing = true;
-        startX = e.clientX;
-        startY = e.clientY;
+        startX = ev.clientX;
+        startY = ev.clientY;
         startW = $editor.width();
         startH = $editor.height();
         $editor.addClass('cep-resizing');
-
-        $(document).on('mousemove.cep-resize', function (e) {
-            if (!resizing) return;
-            if (raf) cancelAnimationFrame(raf);
-            raf = requestAnimationFrame(() => {
-                $editor.css({
-                    width:  Math.max(300, startW + e.clientX - startX) + 'px',
-                    height: Math.max(250, startH + e.clientY - startY) + 'px',
-                });
-            });
-        });
-        $(document).on('mouseup.cep-resize', function () {
-            if (!resizing) return;
-            resizing = false;
-            $editor.removeClass('cep-resizing');
-            $(document).off('.cep-resize');
-            if (raf) cancelAnimationFrame(raf);
-            const settings = getSettings();
-            settings.size = { width: $editor.width(), height: $editor.height() };
-            saveSettingsDebounced();
-        });
         e.preventDefault();
         e.stopPropagation();
+    }
+
+    function onMove(e) {
+        if (!resizing) return;
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(function () {
+            const ev = e.type === 'touchmove' ? e.originalEvent.touches[0] : e;
+            $editor.css({
+                width: Math.max(300, startW + ev.clientX - startX) + 'px',
+                height: Math.max(250, startH + ev.clientY - startY) + 'px',
+            });
+        });
+    }
+
+    function onEnd() {
+        if (!resizing) return;
+        resizing = false;
+        $editor.removeClass('cep-resizing');
+        $(document).off('.cep-resize');
+        if (raf) cancelAnimationFrame(raf);
+        const settings = getSettings();
+        settings.size = { width: $editor.width(), height: $editor.height() };
+        saveSettingsDebounced();
+    }
+
+    $('#cep-resize-handle').on('mousedown touchstart', function (e) {
+        onStart(e);
+        $(document).on('mousemove.cep-resize touchmove.cep-resize', onMove);
+        $(document).on('mouseup.cep-resize touchend.cep-resize', onEnd);
     });
 }
+
+
 
 /* ---- Buttons ---- */
 function initButtons() {
