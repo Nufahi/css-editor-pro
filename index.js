@@ -226,6 +226,7 @@ function updateLinesAndStatus() {
 function initDrag() {
     const $editor = $('#cep-editor');
     const header = document.getElementById('cep-header');
+    if (!header) return;
     let dragging = false, startX, startY, initL, initT;
 
     function getXY(e) {
@@ -237,8 +238,7 @@ function initDrag() {
         if (e.target.closest && e.target.closest('button')) return;
         const p = getXY(e);
         dragging = true;
-        startX = p.x;
-        startY = p.y;
+        startX = p.x; startY = p.y;
         initL = $editor.offset().left;
         initT = $editor.offset().top;
         $editor.addClass('cep-dragging');
@@ -252,10 +252,7 @@ function initDrag() {
         if (!dragging) return;
         e.preventDefault();
         const p = getXY(e);
-        $editor.css({
-            left: (initL + p.x - startX) + 'px',
-            top: (initT + p.y - startY) + 'px',
-        });
+        $editor.css({ left: (initL + p.x - startX) + 'px', top: (initT + p.y - startY) + 'px' });
     }
 
     function onEnd() {
@@ -276,11 +273,11 @@ function initDrag() {
 }
 
 
-
 /* ---- Resize ---- */
 function initResize() {
     const $editor = $('#cep-editor');
     const handle = document.getElementById('cep-resize-handle');
+    if (!handle) return;
     let resizing = false, startX, startY, startW, startH, raf;
 
     function getXY(e) {
@@ -291,10 +288,8 @@ function initResize() {
     function onStart(e) {
         const p = getXY(e);
         resizing = true;
-        startX = p.x;
-        startY = p.y;
-        startW = $editor.width();
-        startH = $editor.height();
+        startX = p.x; startY = p.y;
+        startW = $editor.width(); startH = $editor.height();
         $editor.addClass('cep-resizing');
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onEnd);
@@ -334,7 +329,6 @@ function initResize() {
     handle.addEventListener('mousedown', onStart);
     handle.addEventListener('touchstart', onStart, { passive: false });
 }
-
 
 
 /* ---- Buttons ---- */
