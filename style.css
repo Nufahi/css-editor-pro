@@ -1,0 +1,245 @@
+/* ===== CSS Editor Pro — Theme-Adaptive (no color gutter) ===== */
+
+#cep-editor {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    width: 420px;
+    height: 500px;
+    background: var(--SmartThemeBlurTintColor, #1e1e1e);
+    border: 1px solid var(--SmartThemeBorderColor, #3a3a3a);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.6);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    backdrop-filter: blur(var(--SmartThemeBlurStrength, 10px));
+    -webkit-backdrop-filter: blur(var(--SmartThemeBlurStrength, 10px));
+}
+
+#cep-editor.cep-collapsed { height: auto !important; min-height: unset; }
+#cep-editor.cep-collapsed #cep-content,
+#cep-editor.cep-collapsed #cep-search-bar,
+#cep-editor.cep-collapsed #cep-resize-handle { display: none !important; }
+#cep-editor.cep-dragging { opacity: .95; }
+#cep-editor.cep-resizing { user-select: none; }
+#cep-editor.cep-resizing * { pointer-events: none; }
+
+#cep-header {
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #252526) 90%, black 10%);
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #3a3a3a);
+    flex-shrink: 0;
+    cursor: move;
+    user-select: none;
+}
+.cep-title { font-weight: 600; font-size: 13px; color: var(--SmartThemeBodyColor, #ccc); letter-spacing: .3px; }
+.cep-header-controls { display: flex; gap: 6px; }
+.cep-header-btn {
+    background: transparent;
+    border: 1px solid var(--SmartThemeBorderColor, #3e3e42);
+    color: var(--SmartThemeQuoteColor, #999);
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s ease;
+}
+.cep-header-btn:hover { background: var(--SmartThemeBorderColor, #3e3e42); color: var(--SmartThemeBodyColor, #fff); }
+#cep-btn-close:hover { background: #c1392d; border-color: #c1392d; color: #fff; }
+#cep-btn-refresh:hover { background: #0e639c; border-color: #1177bb; color: #fff; }
+.cep-header-btn i { font-size: 11px; pointer-events: none; }
+
+#cep-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #252526) 85%, black 15%);
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #3a3a3a);
+    flex-shrink: 0;
+}
+.cep-search-icon { color: var(--SmartThemeQuoteColor, #555); font-size: 11px; flex-shrink: 0; }
+#cep-search-wrap { flex: 1; position: relative; display: flex; align-items: center; }
+#cep-search-input {
+    width: 100%;
+    height: 26px;
+    padding: 3px 28px 3px 8px;
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1e1e1e) 80%, black 20%);
+    color: var(--SmartThemeBodyColor, #d4d4d4);
+    border: 1px solid var(--SmartThemeBorderColor, #3a3a3a);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    outline: none;
+    transition: border-color .15s;
+}
+#cep-search-input:focus { border-color: #0e639c; }
+#cep-search-input::placeholder { color: var(--SmartThemeQuoteColor, #555); font-style: italic; }
+.cep-search-clear {
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--SmartThemeQuoteColor, #555);
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all .15s ease;
+}
+.cep-search-clear:hover { color: var(--SmartThemeBodyColor, #ccc); background: var(--SmartThemeBorderColor, #3e3e42); }
+.cep-search-clear i { font-size: 10px; pointer-events: none; }
+#cep-search-count { font-size: 11px; color: var(--SmartThemeQuoteColor, #707070); min-width: 36px; text-align: center; user-select: none; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.cep-search-btn {
+    background: transparent;
+    border: 1px solid var(--SmartThemeBorderColor, #3e3e42);
+    color: var(--SmartThemeQuoteColor, #999);
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s ease;
+    padding: 0;
+    flex-shrink: 0;
+}
+.cep-search-btn:hover { background: var(--SmartThemeBorderColor, #3e3e42); color: var(--SmartThemeBodyColor, #fff); }
+.cep-search-btn i { font-size: 10px; pointer-events: none; }
+
+#cep-content { flex: 1; display: flex; flex-direction: column; padding: 10px 12px 0; min-height: 0; }
+
+#cep-editor-wrap {
+    flex: 1; display: flex; min-height: 0;
+    border: 1px solid var(--SmartThemeBorderColor, #3a3a3a);
+    border-radius: 6px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1e1e1e) 80%, black 20%);
+}
+
+#cep-line-numbers {
+    width: 48px;
+    flex-shrink: 0;
+    background: transparent;
+    color: var(--SmartThemeQuoteColor, #5a5a5a);
+    font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 12px 10px 12px 0;
+    text-align: right;
+    overflow: hidden;
+    user-select: none;
+    border-right: 1px solid var(--SmartThemeBorderColor, #2d2d30);
+    opacity: .6;
+}
+
+#cep-textarea {
+    flex: 1;
+    width: 100%;
+    background: transparent;
+    color: var(--SmartThemeBodyColor, #d4d4d4);
+    border: none;
+    padding: 12px;
+    font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    resize: none;
+    cursor: text;
+    outline: none;
+    tab-size: 2;
+}
+#cep-textarea::placeholder { color: var(--SmartThemeQuoteColor, #555); font-style: italic; }
+#cep-textarea::selection { background: rgba(14,99,156,.4); color: var(--SmartThemeBodyColor, #d4d4d4); }
+#cep-textarea::-webkit-scrollbar { width: 10px; }
+#cep-textarea::-webkit-scrollbar-track { background: transparent; }
+#cep-textarea::-webkit-scrollbar-thumb { background: var(--SmartThemeBorderColor, #3a3a3a); border-radius: 5px; border: 2px solid transparent; }
+#cep-textarea::-webkit-scrollbar-thumb:hover { background: var(--SmartThemeQuoteColor, #4e4e4e); }
+
+#cep-statusbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 12px;
+    background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #333) 80%, black 20%);
+    color: var(--SmartThemeBodyColor, #ccc);
+    font-size: 11px;
+    font-weight: 500;
+    flex-shrink: 0;
+    user-select: none;
+    letter-spacing: .2px;
+    margin-top: 8px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 1px solid var(--SmartThemeBorderColor, #3a3a3a);
+}
+
+#cep-resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: nwse-resize;
+    z-index: 10;
+}
+#cep-resize-handle::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 10px;
+    height: 10px;
+    background: linear-gradient(135deg,
+        transparent 0%, transparent 40%,
+        var(--SmartThemeQuoteColor, rgba(255,255,255,.15)) 40%,
+        var(--SmartThemeQuoteColor, rgba(255,255,255,.15)) 45%,
+        transparent 45%, transparent 55%,
+        var(--SmartThemeQuoteColor, rgba(255,255,255,.15)) 55%,
+        var(--SmartThemeQuoteColor, rgba(255,255,255,.15)) 60%,
+        transparent 60%);
+    opacity: .4;
+}
+#cep-resize-handle:hover::after { opacity: .8; }
+
+#cep-fab {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: var(--SmartThemeBlurTintColor, #2d2d30);
+    border: 1px solid var(--SmartThemeBorderColor, #3a3a3a);
+    color: var(--SmartThemeBodyColor, #d4d4d4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 24px rgba(0,0,0,.6);
+    z-index: 9998;
+    transition: all .3s ease;
+    backdrop-filter: blur(10px);
+}
+#cep-fab:hover {
+    background: #0e639c;
+    border-color: #1177bb;
+    color: #fff;
+    transform: translateY(-3px) scale(1.05);
+}
+#cep-fab i { font-size: 20px; pointer-events: none; }
+
+.css-editor-pro-settings { margin: 5px 0; }
